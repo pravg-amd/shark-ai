@@ -45,10 +45,10 @@ class Sampler:
         """
         partitioned_tokens = np.argpartition(logits, k)
         # Slice off all axes except the last one
-        zero_indices = [0] * (len(partitioned_tokens.shape) - 1)
+        zero_indices = (0,) * (partitioned_tokens.ndim - 1)
 
         # Obtain tokens & values from partition
-        top_tokens = partitioned_tokens[*zero_indices, k:].tolist()
+        top_tokens = partitioned_tokens[zero_indices + (slice(k, None),)].tolist()
         values_view = logits.view(*zero_indices).items
 
         top_values = []

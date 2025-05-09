@@ -48,7 +48,7 @@ class Sampler:
         zero_indices = [0] * (len(partitioned_tokens.shape) - 1)
 
         # Obtain tokens & values from partition
-        top_tokens = partitioned_tokens[*zero_indices, k:]
+        top_tokens = partitioned_tokens[*zero_indices, k:].tolist()
         values_view = logits.view(*zero_indices).items
 
         top_values = []

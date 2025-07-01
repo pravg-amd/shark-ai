@@ -90,3 +90,59 @@ jobs:
           --model flux_schnell \
           --build_preference compile \
           --hf-token ${HF_TOKEN}
+
+    - name: Upload images
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: generated-images
+        path: |
+          output_artifacts/sdxl/
+          output_artifacts/flux_dev/
+          output_artifacts/flux_schnell/
+
+    - name: Cleanup artifacts
+        run: |
+            rm -rf output_artifacts
+            test ! -d output_artifacts && echo "Output artifacts is removed"
+
+  # New job to push logs to shark-ai-reports repository
+  push_logs:
+    name: "Push sdxl/flux generated images"
+    needs: [ test_sdxl_flux_serving ]
+    runs-on: linux-mi300-1gpu-ossci-nod-ai
+    steps:
+    - name: Download log artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: generated-images
+        path: gen_images
+
+    - name: Validate Images
+        run: |
+            test -d gen_images && echo "Generated images are found"
+            ls gen_images/sdxl
+            ls gen_images/flux_dev
+            ls gen_images/flux_schnell
+
+    - name: Checkout Target Repo
+      uses: actions/checkout@v4
+      with:
+        repository: nod-ai/shark-ai-reports
+        token: ${{ secrets.SHARK_AI_REPORTS_GITHUB_TOKEN }}
+        path: shark-ai-reports
+
+    - name: Push artifacts
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email ""
+        date=$(date -u +'%Y-%m-%d')
+        mkdir -p "shark-ai-reports/$date/generated-images"
+        cp -v gen_images/sdxl/*.png "shark-ai-reports/$date/generated-images/sdxl.png"
+        cp -v gen_images/flux_dev/*.png "shark-ai-reports/$date/generated-images/flux_dev.png"
+        cp -v gen_images/flux_schnell/*.png "shark-ai-reports/$date/generated-images/flux_schnell.png"
+        cd shark-ai-reports
+        git pull
+        git checkout test_report 2>/dev/null || git checkout -b test_report
+        git add $date
+        git commit -m "Add sdxl/flux images on $(date -u +'%Y-%m-%d')"
+        git push origin test_report

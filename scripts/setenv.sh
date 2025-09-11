@@ -45,7 +45,6 @@ while [[ "$1" != "" ]]; do
             echo "setenv.sh --stable  : To install stable release"
             echo "setenv.sh --source  : To install from IREE source"
             echo "setenv.sh --source-whl  : To install from IREE source wheels"
-            echo "setenv.sh --source-whl  : To install from IREE source wheels"
             echo "--iree-commit-hash <hash> : To install IREE with specified commit"
             echo "--iree-remote-repo <org/repo> To install with specified IREE fork. Defaults to iree-org/iree"
             echo "--shark-ai-commit-hash <hash> : To install shark-ai with specified commit"

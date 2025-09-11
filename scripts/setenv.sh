@@ -17,8 +17,8 @@ while [[ "$1" != "" ]]; do
         --nightly)
             export BUILD_TYPE="nightly"
             ;;
-        --source)
-            export BUILD_TYPE="source"
+        --tom)
+            export BUILD_TYPE="tom"
             ;;
         --source-whl)
             export BUILD_TYPE="source-whl"
@@ -43,8 +43,8 @@ while [[ "$1" != "" ]]; do
             echo "Usage: $0 [--<different flags>] "
             echo "setenv.sh --nightly : To install nightly release"
             echo "setenv.sh --stable  : To install stable release"
-            echo "setenv.sh --source  : To install from IREE source"
-            echo "setenv.sh --source-whl  : To install from IREE source wheels"
+            echo "setenv.sh --tom  : To install with TOM IREE and shark-ai"
+            echo "setenv.sh --source-whl  : To install from IREE and shark-ai source wheels"
             echo "--iree-commit-hash <hash> : To install IREE with specified commit"
             echo "--iree-remote-repo <org/repo> To install with specified IREE fork. Defaults to iree-org/iree"
             echo "--shark-ai-commit-hash <hash> : To install shark-ai with specified commit"
@@ -63,13 +63,11 @@ mkdir -p ${SCRIPT_DIR}/../output_artifacts
 
 if [[ $BUILD_TYPE = "nightly" ]]; then
     pip install -r pytorch-rocm-requirements.txt
-    pip install -r requirements.txt -r requirements-iree-pinned.txt -e sharktank/ -e shortfin/
+    pip install sharktank -f https://github.com/nod-ai/shark-ai/releases/expanded_assets/dev-wheels --pre
+    pip install shortfin[apps] -f https://github.com/nod-ai/shark-ai/releases/expanded_assets/dev-wheels --pre
     pip install -f https://iree.dev/pip-release-links.html --upgrade --pre iree-base-compiler iree-base-runtime iree-turbine
-    pip install -f https://iree.dev/pip-release-links.html --upgrade --pre \
-          iree-base-compiler iree-base-runtime --src deps \
-          -e "git+https://github.com/iree-org/iree-turbine.git#egg=iree-turbine"
     pip install mistral_common
-    pip uninstall --yes wave-lang
+    pip uninstall --y wave-lang
     pip install -f https://github.com/iree-org/wave/releases/expanded_assets/dev-wheels wave-lang --no-index
 
 elif [[ $BUILD_TYPE = "stable" ]]; then
@@ -148,7 +146,7 @@ elif [[ $BUILD_TYPE = "source-whl" ]]; then
     cd $SHARK_AI_ROOT_DIR
     rm -rf iree
 
-elif [[ $BUILD_TYPE = "source" ]]; then
+elif [[ $BUILD_TYPE = "tom" ]]; then
     pip install -r pytorch-rocm-requirements.txt
     pip install -r requirements.txt -r requirements-iree-pinned.txt -e sharktank/ -e shortfin/
     pip install -f https://iree.dev/pip-release-links.html --upgrade --pre iree-base-compiler iree-base-runtime iree-turbine
@@ -158,9 +156,6 @@ elif [[ $BUILD_TYPE = "source" ]]; then
     pip uninstall -y iree-base-compiler iree-base-runtime
     git clone https://github.com/iree-org/iree.git
     cd iree
-        git remote add fork_user https://github.com/${IREE_REMOTE_REPO}
-        git fetch fork_user
-        git checkout ${IREE_COMMIT_HASH}
         git submodule update --init
         cmake -G Ninja -B ../iree-build/ -S . \
        -DCMAKE_BUILD_TYPE=RelWithDebInfo \

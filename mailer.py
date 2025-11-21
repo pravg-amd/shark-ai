@@ -1,30 +1,34 @@
-        import smtplib
-        from email.mime.multipart import MIMEMultipart
-        from email.mime.text import MIMEText
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import os
 
-        # Email credentials from GitHub secrets
-        smtp_server = "smtp.gmail.com"
-        smtp_port = 465  # Use SSL port for SMTP
-        smtp_username = "${{ secrets.GMAIL_USERNAME }}"
-        smtp_password = "${{ secrets.GMAIL_PASSWORD }}"
+# Read credentials from environment variables
+smtp_username = os.getenv("GMAIL_USERNAME")
+smtp_password = os.getenv("GMAIL_PASSWORD")
 
-        sender_email = smtp_username
-        receiver_email = "praveen.g2@amd.com"  # Replace with recipient's email
-        subject = "GitHub Actions Email"
-        body = "This is a test email sent from GitHub Actions using Gmail's SMTP server with SSL."
+smtp_server = "smtp.gmail.com"
+smtp_port = 465  # SSL port
 
-        # Set up the MIME message
-        msg = MIMEMultipart()
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+sender_email = smtp_username
+receiver_email = "praveen.g2@amd.com"   # ← change this
+subject = "GitHub Actions Gmail Test"
+body = "Hello! This email was sent from GitHub Actions using Gmail SMTP over SSL."
 
-        try:
-            # Connect to Gmail's SMTP server using SSL
-            with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-                server.login(smtp_username, smtp_password)  # Log in to Gmail using your credentials
-                server.sendmail(sender_email, receiver_email, msg.as_string())  # Send the email
-                print("Email sent successfully")
-        except Exception as e:
-            print(f"Failed to send email: {e}")
+# Create message
+msg = MIMEMultipart()
+msg["From"] = sender_email
+msg["To"] = receiver_email
+msg["Subject"] = subject
+msg.attach(MIMEText(body, "plain"))
+
+try:
+    with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
+        server.login(smtp_username, smtp_password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+
+    print("Email sent successfully!")
+
+except Exception as e:
+    print("Error sending email:", e)
+    exit(1)
